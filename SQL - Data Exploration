@@ -1,4 +1,11 @@
---creating covid deaths table by importing the csv file in our database
+/*
+Covid 19 Data Exploration
+
+Skills used: Joins, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
+
+*/
+
+--Creating Table 1 named as covid_deaths by Importing the CSV File
 
 create table covid_deaths(
 	iso_code text,
@@ -34,7 +41,7 @@ delimiter ',' header csv;
 select *
 from covid_deaths
 
---creating covid vaccinations table by importing the csv file in our database
+--Creating Table 2 named as covid_vaccinations by Importing the CSV File
 
 create table covid_vaccinations(
 	iso_code text,
@@ -89,13 +96,13 @@ delimiter ',' header csv;
 select *
 from covid_vaccinations
 
--- select data that is going to be used
+-- Select Data that we are going to be starting with
 
 select location, date, population::numeric, total_cases::numeric, new_cases::numeric, total_deaths::numeric
 from covid_deaths
 order by 1, 2
 
--- looking at total cases vs total deaths globally
+-- Total Cases vs Total Deaths
 
 select location, date, total_cases::numeric, total_deaths::numeric,
 round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
@@ -105,7 +112,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at total cases vs total deaths in United Kingdom
+-- Total Cases vs Total Deaths in United Kingdom
 
 select location, date, total_cases::numeric, total_deaths::numeric,
 round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
@@ -116,8 +123,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at total cases vs total deaths in India
-
+-- Total Cases vs Total Deaths in India
 select location, date, total_cases::numeric, total_deaths::numeric,
 round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
 from covid_deaths
@@ -127,7 +133,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at total cases vs population globally
+-- Total Cases vs Population
 
 select location, date, population::numeric, total_cases::numeric,
 round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
@@ -137,7 +143,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at total cases vs population in United Kingdom
+-- Total Cases vs Population in United Kingdom
 
 select location, date, population::numeric, total_cases::numeric,
 round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
@@ -148,7 +154,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at total cases vs population in India
+-- Total Cases vs Population in India
 
 select location, date, population::numeric, total_cases::numeric,
 round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
@@ -159,7 +165,7 @@ and total_cases is not null
 and continent is not null
 order by 1, 2
 
--- looking at countries with highest covid percentage rate compared to population
+-- Countries with Highest Infection Rate compared to Population
 
 select location, max(round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2)) as covid_percentage, population::numeric, max(total_cases::numeric) as cases_count
 from covid_deaths
@@ -169,7 +175,7 @@ and continent is not null
 group by location, population
 order by covid_percentage desc
 
--- looking at continents with highest covid percentage rate compared to population
+-- Continents with Highest Infection Rate compared to Population
 
 select location, max(round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2)) as covid_percentage, population::numeric, max(total_cases::numeric) as cases_count
 from covid_deaths
@@ -184,7 +190,7 @@ and location <> 'Low income'
 group by location, population
 order by covid_percentage desc
 
--- looking at countries with highest death count per population
+-- Countries with Highest Death Count compared to Population
 
 select location, max(total_deaths::numeric) as deaths_count, population::numeric,
 max(round((total_deaths::numeric / nullif(population::numeric, 0)) * 100, 2)) as death_percentage
@@ -195,7 +201,7 @@ and continent is not null
 group by location, population
 order by deaths_count desc
 
--- looking at continents with highest death count per population
+-- Continents with Highest Death Count compared to Population
 
 select location, population::numeric, max(total_deaths::numeric) as deaths_count
 from covid_deaths
@@ -210,7 +216,7 @@ and location <> 'Low income'
 group by location, population
 order by location, deaths_count desc
 
--- global numbers as per date
+-- Global Numbers as per Date
 
 select date, 
 sum(new_cases::numeric) as total_cases, sum(new_deaths::numeric) as total_deaths, 
@@ -222,7 +228,7 @@ and total_cases > total_deaths
 group by date
 order by 1
 
--- total global numbers
+-- Total Global Numbers
 
 select sum(new_cases::numeric) as total_cases, sum(new_deaths::numeric) as total_deaths, 
 round((sum(new_deaths::numeric) / sum(new_cases::numeric)) * 100, 2) as death_percentage
@@ -231,7 +237,7 @@ where new_cases is not null
 and new_deaths is not null
 and total_cases > total_deaths
 
--- joining covid_deaths and covid_vaccinations
+-- Using Joins for covid_deaths and covid_vaccinations
 
 select *
 from covid_deaths
@@ -239,7 +245,7 @@ join covid_vaccinations
 on covid_deaths.location = covid_vaccinations.location
 and covid_deaths.date = covid_vaccinations.date
 
--- looking at total population vs vaccinations globaly
+-- Total Population vs Total Vaccinations
 
 select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
 covid_vaccinations.new_vaccinations::numeric,
@@ -252,7 +258,7 @@ where covid_deaths.continent is not null
 and covid_vaccinations.new_vaccinations::numeric is not null
 order by 2, 3
 
--- looking at total population vs vaccinations in United Kingdom
+-- Total Population vs Total Vaccinations in United Kingdom
 
 select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
 covid_vaccinations.new_vaccinations::numeric,
@@ -266,7 +272,7 @@ and covid_deaths.continent is not null
 and covid_vaccinations.new_vaccinations::numeric is not null
 order by 2, 3
 
--- looking at total population vs vaccinations in India
+-- Total Population vs Total Vaccinations in India
 
 select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
 covid_vaccinations.new_vaccinations::numeric,
@@ -280,7 +286,7 @@ and covid_deaths.continent is not null
 and covid_vaccinations.new_vaccinations::numeric is not null
 order by 2, 3
 
--- creating temp table for calculating the percentage of total population vaccinated as per country location
+-- Using Temp Table for calculating the percentage of total population vaccinated as per country location
 
 -- step 1
 
@@ -314,7 +320,7 @@ round((cumulative_total_vaccinations / population) * 100, 2) as vaccinations_per
 from total_percent_vaccinated
 order by 2, 3
 
--- creating view to store data for later visualizaion
+-- Creating view to store data for later Visualizaion
 
 -- 1. Global Covid Percentage
 
