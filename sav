@@ -1,0 +1,365 @@
+--creating covid deaths table by importing the csv file in our database
+
+create table covid_deaths(
+	iso_code text,
+	continent text,
+    location text,
+    date DATE,
+    population text,
+    total_cases text,
+    new_cases text,
+    new_cases_smoothed text,
+    total_deaths text,
+    new_deaths text,
+    new_deaths_smoothed text,
+    total_cases_per_million text,
+    new_cases_per_million text,
+    new_cases_smoothed_per_million text,
+    total_deaths_per_million text,
+    new_deaths_per_million text,
+    new_deaths_smoothed_per_million text,
+    reproduction_rate text,
+    icu_patients text,
+    icu_patients_per_million text,
+    hosp_patients text,
+    hosp_patients_per_million text,
+    weekly_icu_admissions text,
+    weekly_icu_admissions_per_million text,
+    weekly_hosp_admissions text,
+    weekly_hosp_admissions_per_million text
+);
+copy covid_deaths from 'C:\Sid\Projects\SQL\COVID\CovidDeaths.csv' 
+delimiter ',' header csv;
+
+select *
+from covid_deaths
+
+--creating covid vaccinations table by importing the csv file in our database
+
+create table covid_vaccinations(
+	iso_code text,
+	continent text,
+	location text, 
+	date DATE,
+	total_tests text,
+	new_tests text,
+	total_tests_per_thousand text,
+	new_tests_per_thousand text,
+	new_tests_smoothed text,
+	new_tests_smoothed_per_thousand text,
+	positive_rate text,
+	tests_per_case text,
+	tests_units text,
+	total_vaccinations text,
+	people_vaccinated text,
+	people_fully_vaccinated text,
+	total_boosters text,
+	new_vaccinations text,
+	new_vaccinations_smoothed text,
+	total_vaccinations_per_hundred text,
+	people_vaccinated_per_hundred text,
+	people_fully_vaccinated_per_hundred text,
+	total_boosters_per_hundred text,
+	new_vaccinations_smoothed_per_million text,
+	new_people_vaccinated_smoothed text,
+	new_people_vaccinated_smoothed_per_hundred text,
+	stringency_index text,
+	population_density text,
+	median_age text,
+	aged_65_older text,
+	aged_70_older text,
+	gdp_per_capita text,
+	extreme_poverty text,
+	cardiovasc_death_rate text,
+	diabetes_prevalence text,
+	female_smokers text,
+	male_smokers text,
+	handwashing_facilities text,
+	hospital_beds_per_thousand text,
+	life_expectancy text,
+	human_development_index text,
+	excess_mortality_cumulative_absolute text,
+	excess_mortality_cumulative text,
+	excess_mortality text,
+	excess_mortality_cumulative_per_million text
+);
+copy covid_vaccinations from 'C:\Sid\Projects\SQL\COVID\CovidVaccinations.csv' 
+delimiter ',' header csv;
+
+select *
+from covid_vaccinations
+
+-- select data that is going to be used
+
+select location, date, population::numeric, total_cases::numeric, new_cases::numeric, total_deaths::numeric
+from covid_deaths
+order by 1, 2
+
+-- looking at total cases vs total deaths globally
+
+select location, date, total_cases::numeric, total_deaths::numeric,
+round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
+from covid_deaths
+where total_deaths is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at total cases vs total deaths in United Kingdom
+
+select location, date, total_cases::numeric, total_deaths::numeric,
+round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
+from covid_deaths
+where location = 'United Kingdom'
+and total_deaths is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at total cases vs total deaths in India
+
+select location, date, total_cases::numeric, total_deaths::numeric,
+round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
+from covid_deaths
+where location = 'India'
+and total_deaths is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at total cases vs population globally
+
+select location, date, population::numeric, total_cases::numeric,
+round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
+from covid_deaths
+where population is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at total cases vs population in United Kingdom
+
+select location, date, population::numeric, total_cases::numeric,
+round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
+from covid_deaths
+where location = 'United Kingdom'
+and population is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at total cases vs population in India
+
+select location, date, population::numeric, total_cases::numeric,
+round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
+from covid_deaths
+where location = 'India'
+and population is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- looking at countries with highest covid percentage rate compared to population
+
+select location, max(round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2)) as covid_percentage, population::numeric, max(total_cases::numeric) as cases_count
+from covid_deaths
+where population is not null
+and total_cases is not null
+and continent is not null
+group by location, population
+order by covid_percentage desc
+
+-- looking at continents with highest covid percentage rate compared to population
+
+select location, max(round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2)) as covid_percentage, population::numeric, max(total_cases::numeric) as cases_count
+from covid_deaths
+where population is not null
+and total_cases is not null
+and continent is null
+and location <> 'World'
+and location <> 'High income'
+and location <> 'Upper middle income'
+and location <> 'Lower middle income'
+and location <> 'Low income'
+group by location, population
+order by covid_percentage desc
+
+-- looking at countries with highest death count per population
+
+select location, max(total_deaths::numeric) as deaths_count, population::numeric,
+max(round((total_deaths::numeric / nullif(population::numeric, 0)) * 100, 2)) as death_percentage
+from covid_deaths
+where population is not null
+and total_deaths is not null
+and continent is not null
+group by location, population
+order by deaths_count desc
+
+-- looking at continents with highest death count per population
+
+select location, population::numeric, max(total_deaths::numeric) as deaths_count
+from covid_deaths
+where population is not null
+and total_deaths is not null
+and continent is null
+and location <> 'World'
+and location <> 'High income'
+and location <> 'Upper middle income'
+and location <> 'Lower middle income'
+and location <> 'Low income'
+group by location, population
+order by location, deaths_count desc
+
+-- global numbers as per date
+
+select date, 
+sum(new_cases::numeric) as total_cases, sum(new_deaths::numeric) as total_deaths, 
+round((sum(new_deaths::numeric) / sum(new_cases::numeric)) * 100, 2) as death_percentage
+from covid_deaths
+where new_cases is not null
+and new_deaths is not null
+and total_cases > total_deaths
+group by date
+order by 1
+
+-- total global numbers
+
+select sum(new_cases::numeric) as total_cases, sum(new_deaths::numeric) as total_deaths, 
+round((sum(new_deaths::numeric) / sum(new_cases::numeric)) * 100, 2) as death_percentage
+from covid_deaths
+where new_cases is not null
+and new_deaths is not null
+and total_cases > total_deaths
+
+-- joining covid_deaths and covid_vaccinations
+
+select *
+from covid_deaths
+join covid_vaccinations
+on covid_deaths.location = covid_vaccinations.location
+and covid_deaths.date = covid_vaccinations.date
+
+-- looking at total population vs vaccinations globaly
+
+select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
+covid_vaccinations.new_vaccinations::numeric,
+sum(covid_vaccinations.new_vaccinations::numeric) over (partition by covid_vaccinations.location order by covid_vaccinations.location, covid_vaccinations.date) as cumulative_total_vaccinations
+from covid_deaths
+join covid_vaccinations
+on covid_deaths.location = covid_vaccinations.location
+and covid_deaths.date = covid_vaccinations.date
+where covid_deaths.continent is not null
+and covid_vaccinations.new_vaccinations::numeric is not null
+order by 2, 3
+
+-- looking at total population vs vaccinations in United Kingdom
+
+select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
+covid_vaccinations.new_vaccinations::numeric,
+sum(covid_vaccinations.new_vaccinations::numeric) over (partition by covid_vaccinations.location order by covid_vaccinations.location, covid_vaccinations.date) as cumulative_total_vaccinations
+from covid_deaths
+join covid_vaccinations
+on covid_deaths.location = covid_vaccinations.location
+and covid_deaths.date = covid_vaccinations.date
+where covid_deaths.location = 'United Kingdom'
+and covid_deaths.continent is not null
+and covid_vaccinations.new_vaccinations::numeric is not null
+order by 2, 3
+
+-- looking at total population vs vaccinations in India
+
+select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
+covid_vaccinations.new_vaccinations::numeric,
+sum(covid_vaccinations.new_vaccinations::numeric) over (partition by covid_vaccinations.location order by covid_vaccinations.location, covid_vaccinations.date) as cumulative_total_vaccinations
+from covid_deaths
+join covid_vaccinations
+on covid_deaths.location = covid_vaccinations.location
+and covid_deaths.date = covid_vaccinations.date
+where covid_deaths.location = 'India'
+and covid_deaths.continent is not null
+and covid_vaccinations.new_vaccinations::numeric is not null
+order by 2, 3
+
+-- creating temp table for calculating the percentage of total population vaccinated as per country location
+
+-- step 1
+
+create table total_percent_vaccinated(
+	continent text,
+	location text,
+	date DATE,
+	population numeric,
+	new_vaccinations numeric,
+	cumulative_total_vaccinations numeric
+);
+insert into total_percent_vaccinated
+select covid_deaths.continent, covid_deaths.location, covid_deaths.date, covid_deaths.population::numeric, 
+covid_vaccinations.new_vaccinations::numeric,
+sum(covid_vaccinations.new_vaccinations::numeric) over (partition by covid_vaccinations.location order by covid_vaccinations.location, covid_vaccinations.date) as cumulative_total_vaccinations
+from covid_deaths
+join covid_vaccinations
+on covid_deaths.location = covid_vaccinations.location
+and covid_deaths.date = covid_vaccinations.date
+where covid_deaths.continent is not null
+and covid_vaccinations.new_vaccinations::numeric is not null
+order by 2, 3;
+
+select *
+from total_percent_vaccinated
+
+-- step 2
+
+select continent, location, date, population, new_vaccinations, cumulative_total_vaccinations,
+round((cumulative_total_vaccinations / population) * 100, 2) as vaccinations_percentage
+from total_percent_vaccinated
+order by 2, 3
+
+-- creating view to store data for later visualizaion
+
+-- 1. Global Covid Percentage
+
+create view "Global Covid Percentage" as
+select location, date, population::numeric, total_cases::numeric,
+round((total_cases::numeric / nullif(population::numeric, 0)) * 100, 2) as covid_percentage
+from covid_deaths
+where population is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- 2. Global Death Percentage
+
+create view "Global Death Percentage" as
+select location, date, total_cases::numeric, total_deaths::numeric,
+round((total_deaths::numeric / nullif(total_cases::numeric, 0)) * 100, 2) as death_percentage
+from covid_deaths
+where total_deaths is not null
+and total_cases is not null
+and continent is not null
+order by 1, 2
+
+-- 3. Sum of Global Numbers
+
+create view "Sum of Global Numbers" as 
+select sum(new_cases::numeric) as total_cases, sum(new_deaths::numeric) as total_deaths, 
+round((sum(new_deaths::numeric) / sum(new_cases::numeric)) * 100, 2) as death_percentage
+from covid_deaths
+where new_cases is not null
+and new_deaths is not null
+and total_cases > total_deaths
+
+-- 4. Global Vaccination Percentage
+
+create view "Global Vaccination Percentage" as
+select continent, location, date, population, new_vaccinations, cumulative_total_vaccinations,
+round((cumulative_total_vaccinations / population) * 100, 2) as vaccinations_percentage
+from total_percent_vaccinated
+order by 2, 3
+
+-- 5. Global Numbers a/p Date
+
+create view "Global Numbers a/p Date" as
+select continent, location, date, population, new_vaccinations, cumulative_total_vaccinations,
+round((cumulative_total_vaccinations / population) * 100, 2) as vaccinations_percentage
+from total_percent_vaccinated
+order by 2, 3
